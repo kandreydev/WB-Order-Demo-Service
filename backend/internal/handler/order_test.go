@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func newTestHandler(t *testing.T, repo *mocks.OrderRepository) *Handler {
+func newTestHandler(repo *mocks.OrderRepository) *Handler {
 	uc := usecase.New(repo)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	return New(uc, logger)
@@ -109,7 +109,7 @@ func TestHandler_GetByID(t *testing.T) {
 			if tc.mockSetup != nil {
 				tc.mockSetup(repo)
 			}
-			h := newTestHandler(t, repo)
+			h := newTestHandler(repo)
 
 			router := chi.NewRouter()
 			router.Get("/api/order/{id}", h.GetByID())
@@ -194,7 +194,7 @@ func TestHandler_GetAll(t *testing.T) {
 			if tc.mockSetup != nil {
 				tc.mockSetup(repo)
 			}
-			h := newTestHandler(t, repo)
+			h := newTestHandler(repo)
 
 			router := chi.NewRouter()
 			router.Get("/api/orders", h.GetAll())
