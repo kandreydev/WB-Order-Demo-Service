@@ -40,7 +40,7 @@ func Run() error {
 	}
 
 	repo := repository.New(conn)
-	cacheDecorator, err := cache.New(ctx, repo)
+	cacheDecorator, err := cache.New(ctx, cfg, repo)
 	if err != nil {
 		logger.Error("cache.New", slog.Any("err", err))
 		return err

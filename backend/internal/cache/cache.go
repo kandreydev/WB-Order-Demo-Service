@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/GkadyrG/L0/backend/config"
 	"github.com/GkadyrG/L0/backend/internal/model"
 	"github.com/GkadyrG/L0/backend/internal/repository"
 	"github.com/pkg/errors"
@@ -24,7 +25,7 @@ type CacheDecorator struct {
 	orders map[string]wrapOrder
 }
 
-func New(ctx context.Context, orderRepo repository.OrderRepository) (*CacheDecorator, error) {
+func New(ctx context.Context, cfg *config.Config, orderRepo repository.OrderRepository) (*CacheDecorator, error) {
 	cache := &CacheDecorator{
 		orders: make(map[string]wrapOrder),
 		repo:   orderRepo,
@@ -33,6 +34,8 @@ func New(ctx context.Context, orderRepo repository.OrderRepository) (*CacheDecor
 	if err := cache.initializeCache(ctx); err != nil {
 		return nil, err
 	}
+
+	cache.сleanCash(cfg.Cache.CleanupInterval, cfg.Cache.TTL)
 
 	return cache, nil
 }
@@ -65,7 +68,7 @@ func (c *CacheDecorator) get(id string) (*model.OrderResponse, bool) {
 	return wrap.order, ok
 }
 
-func (c *CacheDecorator) CleanCash(cleanupInterval time.Duration, timeToLive time.Duration) {
+func (c *CacheDecorator) сleanCash(cleanupInterval time.Duration, timeToLive time.Duration) {
 	go func() {
 		ticker := time.NewTicker(cleanupInterval)
 		defer ticker.Stop()
