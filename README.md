@@ -28,4 +28,4 @@ docker-compose up -d
 
 ## API
 - GET /orders/{id} - Получить заказ
-- POST /orders - Создать заказ
+- POST /orders - Получить превью всех заказов
