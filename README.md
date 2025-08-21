@@ -1,6 +1,6 @@
-# L0 Project - Система управления заказами
+# L0 Project - Тестовое задание
 
-Микросервисная система управления заказами с асинхронной обработкой сообщений.
+Микросервис для отображения информации о заказах с асинхронной обработкой сообщений.
 
 ## Технологии
 
@@ -26,22 +26,6 @@ docker-compose up -d
 - Kafka UI: http://localhost:8087
 - PostgreSQL: localhost:5432
 
-## Управление
-
-# Запуск
-```
-docker-compose up -d
-
-# Остановка
-docker-compose down
-
-# Логи
-docker-compose logs -f
-
-# Пересборка
-docker-compose up -d --build
-```
 ## API
-
 - GET /orders/{id} - Получить заказ
 - POST /orders - Создать заказ
