@@ -27,5 +27,5 @@ docker-compose up -d
 - PostgreSQL: localhost:5432
 
 ## API
-- GET /orders/{id} - Получить заказ
-- POST /orders - Получить превью всех заказов
+- GET /api/orders/{id} - Получить заказ
+- POST /api/orders - Получить превью всех заказов
