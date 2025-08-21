@@ -33,13 +33,6 @@ type KafkaConfig struct {
 	KafkaGroupID string `env:"KAFKA_GROUP_ID" env-required:"true"`
 }
 
-// CorsConfig controls CORS behaviour
-// Example envs:
-// CORS_ENABLED=true
-// CORS_ALLOWED_ORIGINS=http://localhost:5173,https://example.com
-// CORS_ALLOWED_METHODS=GET,POST,OPTIONS
-// CORS_ALLOWED_HEADERS=Content-Type,Authorization
-// If not enabled, CORS middleware is not applied.
 type CorsConfig struct {
 	Enabled        bool     `env:"CORS_ENABLED" env-default:"false"`
 	AllowedOrigins []string `env:"CORS_ALLOWED_ORIGINS" env-separator:","`
