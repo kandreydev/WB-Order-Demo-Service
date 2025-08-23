@@ -24,13 +24,7 @@ func (r *Repo) Save(ctx context.Context, order *model.Order) error {
 		return errors.Wrap(err, "begin transaction")
 	}
 
-	defer func() {
-		if err != nil {
-			tx.Rollback(ctx)
-		} else {
-			tx.Commit(ctx)
-		}
-	}()
+	defer tx.Rollback(ctx)
 
 	const ordersQuery = `
         INSERT INTO orders (
@@ -126,10 +120,21 @@ func (r *Repo) Save(ctx context.Context, order *model.Order) error {
 		}
 	}
 
+	if err = tx.Commit(ctx); err != nil {
+		return errors.Wrap(err, "commit tx")
+	}
+
 	return nil
 }
 
 func (r *Repo) GetByID(ctx context.Context, id string) (*model.OrderResponse, error) {
+	tx, err := r.conn.Begin(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "begin transaction")
+	}
+
+	defer tx.Rollback(ctx)
+
 	o := model.OrderResponse{}
 
 	const orderdQuery = `
@@ -138,7 +143,8 @@ func (r *Repo) GetByID(ctx context.Context, id string) (*model.OrderResponse, er
         FROM orders 
         WHERE order_uid = $1
     `
-	err := r.conn.QueryRow(ctx, orderdQuery, id).Scan(
+
+	err = tx.QueryRow(ctx, orderdQuery, id).Scan(
 		&o.OrderUID,
 		&o.TrackNumber,
 		&o.CustomerID,
@@ -157,7 +163,7 @@ func (r *Repo) GetByID(ctx context.Context, id string) (*model.OrderResponse, er
         SELECT name, phone, city, address, email
         FROM delivery WHERE order_uid = $1
     `
-	err = r.conn.QueryRow(ctx, deliveryQuery, id).Scan(
+	err = tx.QueryRow(ctx, deliveryQuery, id).Scan(
 		&o.Delivery.Name,
 		&o.Delivery.Phone,
 		&o.Delivery.City,
@@ -177,7 +183,7 @@ func (r *Repo) GetByID(ctx context.Context, id string) (*model.OrderResponse, er
         SELECT transaction, currency, amount
         FROM payment WHERE order_uid = $1
     `
-	err = r.conn.QueryRow(ctx, paymentQuery, id).Scan(
+	err = tx.QueryRow(ctx, paymentQuery, id).Scan(
 		&o.Payment.Transaction,
 		&o.Payment.Currency,
 		&o.Payment.Amount,
@@ -195,7 +201,7 @@ func (r *Repo) GetByID(ctx context.Context, id string) (*model.OrderResponse, er
 	SELECT price, name, brand, status
 	FROM items WHERE order_uid = $1
 	`
-	rows, err := r.conn.Query(ctx, itemsQuery, id)
+	rows, err := tx.Query(ctx, itemsQuery, id)
 	if err != nil {
 		return nil, errors.Wrap(err, "get items")
 	}
@@ -222,15 +228,26 @@ func (r *Repo) GetByID(ctx context.Context, id string) (*model.OrderResponse, er
 		return nil, errors.Wrap(apperr.ErrNotFound, "orders not found")
 	}
 
+	if err = tx.Commit(ctx); err != nil {
+		return nil, errors.Wrap(err, "commit tx")
+	}
+
 	return &o, nil
 }
 
 func (r *Repo) GetAll(ctx context.Context) ([]*model.OrderPreview, error) {
+	tx, err := r.conn.Begin(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "begin transaction")
+	}
+
+	defer tx.Rollback(ctx)
+
 	const orderQuery = `
 	SELECT order_uid, track_number, customer_id, date_created
 	FROM orders ORDER BY date_created DESC
 	`
-	rows, err := r.conn.Query(ctx, orderQuery)
+	rows, err := tx.Query(ctx, orderQuery)
 
 	if err != nil {
 		return nil, errors.Wrap(err, "get all orders")
@@ -254,10 +271,21 @@ func (r *Repo) GetAll(ctx context.Context) ([]*model.OrderPreview, error) {
 		return nil, errors.Wrap(apperr.ErrNotFound, "orders not found")
 	}
 
+	if err = tx.Commit(ctx); err != nil {
+		return nil, errors.Wrap(err, "commit tx")
+	}
+
 	return previews, nil
 }
 
 func (r *Repo) GetAllFull(ctx context.Context, limit int) ([]*model.OrderResponse, error) {
+	tx, err := r.conn.Begin(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "begin transaction")
+	}
+
+	defer tx.Rollback(ctx)
+
 	const mainQuery = `
         SELECT 
             o.order_uid, 
@@ -279,7 +307,7 @@ func (r *Repo) GetAllFull(ctx context.Context, limit int) ([]*model.OrderRespons
 		LIMIT $1
     `
 
-	mainRows, err := r.conn.Query(ctx, mainQuery, limit)
+	mainRows, err := tx.Query(ctx, mainQuery, limit)
 	if err != nil {
 		return nil, errors.Wrap(err, "query main orders data")
 	}
@@ -327,7 +355,7 @@ func (r *Repo) GetAllFull(ctx context.Context, limit int) ([]*model.OrderRespons
 		return []*model.OrderResponse{}, nil
 	}
 
-	itemsMap, err := r.getItemsByOrderUIDs(ctx, orderUIDs)
+	itemsMap, err := r.getItemsByOrderUIDs(ctx, tx, orderUIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -342,10 +370,14 @@ func (r *Repo) GetAllFull(ctx context.Context, limit int) ([]*model.OrderRespons
 		}
 	}
 
+	if err = tx.Commit(ctx); err != nil {
+		return nil, errors.Wrap(err, "commit tx")
+	}
+
 	return orders, nil
 }
 
-func (r *Repo) getItemsByOrderUIDs(ctx context.Context, orderUIDs []string) (map[string][]model.ItemResponse, error) {
+func (r *Repo) getItemsByOrderUIDs(ctx context.Context, tx pgx.Tx, orderUIDs []string) (map[string][]model.ItemResponse, error) {
 	const itemsQuery = `
         SELECT 
             order_uid, 
@@ -357,7 +389,7 @@ func (r *Repo) getItemsByOrderUIDs(ctx context.Context, orderUIDs []string) (map
         WHERE order_uid = ANY($1)
     `
 
-	rows, err := r.conn.Query(ctx, itemsQuery, orderUIDs)
+	rows, err := tx.Query(ctx, itemsQuery, orderUIDs)
 	if err != nil {
 		return nil, errors.Wrap(err, "query items")
 	}
