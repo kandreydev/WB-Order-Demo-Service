@@ -29,3 +29,6 @@ docker-compose up -d
 ## API
 - GET /api/orders/{id} - Получить заказ
 - POST /api/orders - Получить превью всех заказов
+
+## Конфиги
+- Конфиги хранятся в backend/.env
