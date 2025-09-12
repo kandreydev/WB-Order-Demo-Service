@@ -36,7 +36,8 @@ func RunMigrations(dsn string, migrationsPath string, logger *slog.Logger) error
 
 	err = m.Up()
 	if err != nil {
-		if dirtyErr, ok := err.(migrate.ErrDirty); ok {
+		var dirtyErr migrate.ErrDirty
+		if errors.As(err, &dirtyErr) {
 			logger.Warn("Database is dirty. Forcing version", "version", dirtyErr.Version)
 			if forceErr := m.Force(int(dirtyErr.Version)); forceErr != nil {
 				return fmt.Errorf("force version failed: %w", forceErr)
