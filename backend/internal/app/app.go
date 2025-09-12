@@ -16,6 +16,7 @@ import (
 	"github.com/GkadyrG/L0/backend/internal/kafka/consumer"
 	"github.com/GkadyrG/L0/backend/internal/logger"
 	"github.com/GkadyrG/L0/backend/internal/repository"
+	"github.com/GkadyrG/L0/backend/internal/server"
 	"github.com/GkadyrG/L0/backend/internal/storage"
 	"github.com/GkadyrG/L0/backend/internal/usecase"
 )
@@ -61,7 +62,7 @@ func Run() error {
 		return err
 	}
 
-	server := NewServer(srv, cons, logger)
+	server := server.NewServer(srv, cons, logger)
 
 	go func() {
 		if err := RunEmulator(ctx, cfg, logger, EmulatorOptions{Num: cfg.EmulatorMessages}); err != nil {

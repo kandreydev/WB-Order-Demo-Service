@@ -48,7 +48,7 @@ services:
       test: ["CMD", "echo", "ruok", "|", "nc", "localhost", "2181"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
     networks:
       - app-network
 
@@ -57,6 +57,7 @@ services:
     depends_on:
       zookeeper:
         condition: service_healthy
+    restart: unless-stopped
     ports:
       - "9092:9092"    
       - "29092:29092"   
