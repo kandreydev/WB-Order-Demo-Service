@@ -6,26 +6,25 @@ import (
 )
 
 const (
-	EnvLocal = "local"
-	EnvDev   = "dev"
-	EnvProd  = "prod"
+	debug = "debug"
+	info  = "info"
+	error = "error"
 )
 
-func SetupLogger(env string) *slog.Logger {
+func SetupLogger(logLevel string) *slog.Logger {
 	var log *slog.Logger
-
-	switch env {
-	case EnvLocal:
+	switch logLevel {
+	case debug:
 		log = slog.New(
 			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
 		)
-	case EnvDev:
-		log = slog.New(
-			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
-		)
-	case EnvProd:
+	case info:
 		log = slog.New(
 			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}),
+		)
+	case error:
+		log = slog.New(
+			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelError}),
 		)
 	default:
 		log = slog.New(

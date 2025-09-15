@@ -25,9 +25,9 @@ func Run() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	logger := logger.SetupLogger(logger.EnvLocal)
-
 	cfg := config.LoadConfig()
+
+	logger := logger.SetupLogger(cfg.App.LogLevel)
 
 	if err := migrate.RunMigrations(cfg.GetDSN(), cfg.MigratePath, logger); err != nil {
 		logger.Error("migrate", slog.Any("err", err))

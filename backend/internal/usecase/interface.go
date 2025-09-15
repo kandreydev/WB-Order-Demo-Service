@@ -6,7 +6,6 @@ import (
 	"github.com/GkadyrG/L0/backend/internal/model"
 )
 
-
 type OrderProvider interface {
 	Save(ctx context.Context, order *model.Order) error
 	GetByID(ctx context.Context, id string) (*model.OrderResponse, error)
